@@ -3,35 +3,39 @@ import pandas as pd
 import plotly.express as px
 import requests
 
-# Загружаем geojson
+# Загружаем geojson (как у тебя)
 url = "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/russia.geojson"
 geojson = requests.get(url).json()
 
-# Загружаем свои данные (пример: CSV с колонками "Регион" и "Значение")
-# Подставь свой файл
+# Пример данных (подставь свои)
 df = pd.DataFrame({
-    "Регион": ["Москва", "Санкт-Петербург", "Ростовская область", "Волгоградская область"],
-    "Значение": [10, 20, 30, 40]
+    "Регион": ["Москва", "Санкт-Петербург", "Ростовская область", "Волгоградская область", "Астраханская область", "Республика Калмыкия"],
+    "Значение": [10, 20, 30, 40, 50, 60]
 })
 
-st.write("### Данные для отображения")
-st.write(df)
+# Словарь сопоставления (ключ = название в df, значение = название в geojson)
+name_mapping = {
+    'Москва': 'Moscow',
+    'Санкт-Петербург': 'Saint Petersburg',
+    'Ростовская область': 'Rostov',
+    'Волгоградская область': 'Volgograd',
+    'Астраханская область': 'Astrakhan',
+    'Республика Калмыкия': 'Kalmykia',
+}
 
-# Отладка: список всех регионов в geojson
-regions_in_map = [feature['properties']['name'] for feature in geojson['features']]
-st.write("### Регионы, доступные в geojson:")
-st.write(sorted(regions_in_map))
+# Применяем сопоставление
+df['region_match'] = df['Регион'].apply(lambda x: name_mapping.get(x, x))
 
 # Строим карту
 fig = px.choropleth(
     df,
     geojson=geojson,
-    locations='Регион',
-    featureidkey="properties.name",   # важный момент — оставляем как было
+    locations='region_match',
+    featureidkey="properties.name",
     color='Значение',
     color_continuous_scale="Viridis",
     scope="europe",
-    labels={'Значение':'Показатель'},
+    labels={'Значение': 'Показатель'}
 )
 
 fig.update_geos(fitbounds="locations", visible=False)
